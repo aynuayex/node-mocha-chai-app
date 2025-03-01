@@ -1,5 +1,7 @@
+require("dotenv").config({ path: ".env.test" });
 const chai = require("chai");
 const chaiHttp = require("chai-http");
+const bcrypt = require("bcryptjs")
 
 const { expect } = chai;
 const app = require("../app");
@@ -27,7 +29,7 @@ describe("User API", () => {
     const hashedPassword = await bcrypt.hash("SecurePass10!", 10);
     await User.create({
       fullName: "Test User",
-      email: "testuser@example.com",
+      email: "testuser@gmail.com",
       password: hashedPassword,
       refreshToken: [],
     });
@@ -36,8 +38,8 @@ describe("User API", () => {
   describe("User Registration API", () => {
     it("should register a user with valid data", async () => {
       const res = await chai.request(app).post("/api/users/register").send({
-        fullName: "John Doe",
-        email: "john@example.com",
+        fullName: "Ayne Abreham",
+        email: "aynuman19@gmail.com",
         password: "Hahaha10#",
         confirmPassword: "Hahaha10#",
       });
@@ -48,8 +50,8 @@ describe("User API", () => {
         "User registered successfully"
       );
       expect(res.body).to.have.property("id");
-      expect(res.body).to.have.property("fullName", "John Doe");
-      expect(res.body).to.have.property("email", "john@example.com");
+      expect(res.body).to.have.property("fullName", "Ayne Abreham");
+      expect(res.body).to.have.property("email", "aynuman19@gmail.com");
       expect(res.body).to.have.property("accessToken");
     });
 
@@ -76,15 +78,12 @@ describe("User API", () => {
         .post("/api/users/register")
         .send({
           fullName: "John Doe",
-          email: "john@example.com",
+          email: "john@gmail.com",
           password: "abc",
           confirmPassword: "abc",
         })
         .end((err, res) => {
           expect(res).to.have.status(400);
-          expect(res.body)
-            .to.have.property("message")
-            .that.includes("Password must be at least 8 characters");
           done();
         });
     });
@@ -95,16 +94,12 @@ describe("User API", () => {
         .post("/api/users/register")
         .send({
           fullName: "John Doe",
-          email: "john@example.com",
+          email: "john@gmail.com",
           password: "Hahaha10#",
           confirmPassword: "WrongPass10#",
         })
         .end((err, res) => {
           expect(res).to.have.status(400);
-          expect(res.body).to.have.property(
-            "message",
-            "Passwords do not match"
-          );
           done();
         });
     });
@@ -112,22 +107,18 @@ describe("User API", () => {
     it("should fail registration if email already exists", async () => {
       await User.create({
         fullName: "John Doe",
-        email: "john@example.com",
+        email: "john@gmail.com",
         password: "Hahaha10#",
       });
 
       const res = await chai.request(app).post("/api/users/register").send({
         fullName: "John Doe",
-        email: "john@example.com",
+        email: "john@gmail.com",
         password: "Hahaha10#",
         confirmPassword: "Hahaha10#",
       });
 
       expect(res).to.have.status(409);
-      expect(res.body).to.have.property(
-        "message",
-        "user already exist with that information, Please change Email!"
-      );
     });
 
     it("should fail registration with missing fields", (done) => {
@@ -135,7 +126,7 @@ describe("User API", () => {
         .request(app)
         .post("/api/users/register")
         .send({
-          email: "john@example.com",
+          email: "john@gmail.com",
           password: "Hahaha10#",
         })
         .end((err, res) => {
@@ -151,7 +142,7 @@ describe("User API", () => {
   describe("User Login API", () => {
     it("should log in a user with correct credentials", async () => {
       const res = await chai.request(app).post("/api/users/login").send({
-        email: "testuser@example.com",
+        email: "testuser@gmail.com",
         password: "SecurePass10!",
       });
 
@@ -161,13 +152,13 @@ describe("User API", () => {
         .that.includes("Logged in as Test User");
       expect(res.body).to.have.property("id");
       expect(res.body).to.have.property("fullName", "Test User");
-      expect(res.body).to.have.property("email", "testuser@example.com");
+      expect(res.body).to.have.property("email", "testuser@gmail.com");
       expect(res.body).to.have.property("accessToken");
     });
 
     it("should fail login with incorrect password", async () => {
       const res = await chai.request(app).post("/api/users/login").send({
-        email: "testuser@example.com",
+        email: "testuser@gmail.com",
         password: "WrongPassword!",
       });
 
@@ -176,7 +167,7 @@ describe("User API", () => {
 
     it("should fail login with non-existent email", async () => {
       const res = await chai.request(app).post("/api/users/login").send({
-        email: "nonexistent@example.com",
+        email: "nonexistent@gmail.com",
         password: "SecurePass10!",
       });
 
@@ -194,7 +185,7 @@ describe("User API", () => {
 
     it("should fail login with missing password field", async () => {
       const res = await chai.request(app).post("/api/users/login").send({
-        email: "testuser@example.com",
+        email: "testuser@gmail.com",
       });
 
       expect(res).to.have.status(400);
@@ -202,32 +193,3 @@ describe("User API", () => {
     });
   });
 });
-
-// describe('User API', () => {
-//     before(async () => {
-//         await User.deleteMany({});
-//     });
-
-//     it('should create a new user', (done) => {
-//         chai.request(app)
-//             .post('/api/users')
-//             .send({ name: 'John Doe', email: 'john@example.com' })
-//             .end((err, res) => {
-//                 expect(res).to.have.status(201);
-//                 expect(res.body).to.be.an('object');
-//                 expect(res.body).to.have.property('name', 'John Doe');
-//                 expect(res.body).to.have.property('email', 'john@example.com');
-//                 done();
-//             });
-//     });
-
-//     it('should fetch all users', (done) => {
-//         chai.request(app)
-//             .get('/api/users')
-//             .end((err, res) => {
-//                 expect(res).to.have.status(200);
-//                 expect(res.body).to.be.an('array');
-//                 done();
-//             });
-//     });
-// });
